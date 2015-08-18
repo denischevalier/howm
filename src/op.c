@@ -298,6 +298,9 @@ void motion(char *target)
 {
 	int type;
 
+	if (cur_state == OPERATOR_STATE)
+		return;
+
 	if (strncmp(target, "w", 1) == 0)
 		type = WORKSPACE;
 	else if (strncmp(target, "c", 1) == 0)
@@ -307,6 +310,7 @@ void motion(char *target)
 
 	operator_func(type, cur_cnt);
 	cur_state = OPERATOR_STATE;
+	operator_func = NULL;
 	/* Reset so that qc is equivalent to q1c. */
 	cur_cnt = 1;
 }
