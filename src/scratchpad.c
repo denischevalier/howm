@@ -11,7 +11,7 @@
  *
  * @author Harvey Hunt
  *
- * @date 2014
+ * @date 2015
  *
  * @brief The stack implementation and appropriate functions required for
  * sending clients (or groups of clients) to the scratchpad.

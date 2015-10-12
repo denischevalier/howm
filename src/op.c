@@ -14,7 +14,7 @@
  *
  * @author Harvey Hunt
  *
- * @date 2014
+ * @date 2015
  *
  * @brief All of howm's operators are implemented here.
  */
