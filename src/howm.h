@@ -21,9 +21,9 @@
 #define WORKSPACES 5
 #define WS_DEF_LAYOUT HSTACK
 #define MASTER_RATIO 0.6
-#define DEF_BORDER_FOCUS "#70898F"
-#define DEF_BORDER_UNFOCUS "#55555"
-#define DEF_BORDER_PREV_FOCUS "#74718E"
+#define DEF_BORDER_FOCUS "#FFFFFF"
+#define DEF_BORDER_UNFOCUS "#333333"
+#define DEF_BORDER_PREV_FOCUS "#444444"
 #define DEF_BORDER_URGENT "#FF0000"
 #define GAP 0
 
@@ -32,7 +32,7 @@
  *
  * @author Harvey Hunt
  *
- * @date 2014
+ * @date 2015
  *
  * @brief howm
  */
@@ -74,7 +74,6 @@ extern int cur_state;
 extern xcb_screen_t *screen;
 extern xcb_ewmh_connection_t *ewmh;
 extern bool running;
-extern bool restart;
 
 extern Workspace wss[];
 
@@ -86,7 +85,6 @@ extern xcb_atom_t wm_atoms[];
 void howm_info(void);
 uint32_t get_colour(char *colour);
 void quit_howm(const int exit_status);
-void restart_howm(void);
 void spawn(char *cmd[]);
 
 #endif

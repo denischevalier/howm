@@ -12,7 +12,7 @@
  *
  * @author Harvey Hunt
  *
- * @date 2014
+ * @date 2015
  *
  * @brief Helper functions for dealing with an entire workspace or being able
  * to correctly calculate a workspace index.
@@ -25,10 +25,14 @@
  */
 void kill_ws(const int ws)
 {
-	log_info("Killing off workspace <%d>", ws);
+	if (!wss[ws].client_cnt)
+		return;
+
 	while (wss[ws].head)
 		kill_client(ws, wss[ws].client_cnt == 1
 				&& cw == ws);
+
+	log_info("Killed off workspace <%d>", ws);
 }
 
 /**
@@ -41,7 +45,7 @@ void kill_ws(const int ws)
  *
  * @return A corrected workspace number.
  */
-int correct_ws(unsigned int ws)
+inline int correct_ws(unsigned int ws)
 {
 	if (ws > WORKSPACES)
 		return ws - WORKSPACES;

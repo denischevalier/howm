@@ -15,13 +15,14 @@
 #include "ipc.h"
 #include "scratchpad.h"
 #include "xcb_help.h"
+#include "workspace.h"
 
 /**
  * @file howm.c
  *
  * @author Harvey Hunt
  *
- * @date 2014
+ * @date 2015
  *
  * @brief The glue that holds howm together. This file houses the main event
  * loop as well as setup and cleanup.
@@ -62,7 +63,6 @@ struct config conf = {
 
 
 bool running = true;
-bool restart = false;
 xcb_connection_t *dpy = NULL;
 xcb_screen_t *screen = NULL;
 xcb_ewmh_connection_t *ewmh = NULL;
@@ -71,7 +71,7 @@ const char *WM_ATOM_NAMES[] = { "WM_DELETE_WINDOW", "WM_PROTOCOLS" };
 xcb_atom_t wm_atoms[LENGTH(WM_ATOM_NAMES)];
 
 int numlockmask = 0;
-int retval = 0;
+int retval = EXIT_FAILURE;
 int last_ws = 0;
 int previous_layout = 0;
 int cw = 1;
@@ -171,6 +171,7 @@ int main(int argc, char *argv[])
 		log_err("Can't open X connection");
 		exit(EXIT_FAILURE);
 	}
+
 	setup();
 	sock_fd = ipc_init();
 	check_other_wm();
@@ -198,7 +199,6 @@ int main(int argc, char *argv[])
 					ret = ipc_process(data, n);
 					if (write(cmd_fd, &ret, sizeof(int)) == -1)
 						log_err("Unable to send response. errno: %d", errno);
-					close(cmd_fd);
 				}
 			}
 			if (FD_ISSET(dpy_fd, &descs)) {
@@ -222,15 +222,8 @@ int main(int argc, char *argv[])
 	close(sock_fd);
 	free(data);
 
-	if (!running && !restart) {
+	if (!running)
 		return retval;
-	} else if (!running && restart) {
-		char *const args[] = {HOWM_PATH, NULL};
-
-		execv(args[0], args);
-		return EXIT_SUCCESS;
-	}
-	return EXIT_FAILURE;
 }
 
 /**
@@ -264,25 +257,20 @@ void howm_info(void)
  */
 static void cleanup(void)
 {
-	xcb_window_t *w;
-	xcb_query_tree_reply_t *q;
-	uint16_t i;
+	int i;
 
 	log_warn("Cleaning up");
 
-	q = xcb_query_tree_reply(dpy, xcb_query_tree(dpy, screen->root), 0);
-	if (q) {
-		w = xcb_query_tree_children(q);
-		for (i = 0; i != q->children_len; ++i)
-			delete_win(w[i]);
-	free(q);
-	}
+	for (i = 1; i < WORKSPACES; i++)
+		kill_ws(i);
+
 	xcb_set_input_focus(dpy, XCB_INPUT_FOCUS_POINTER_ROOT, screen->root,
 			XCB_CURRENT_TIME);
 	xcb_ewmh_connection_wipe(ewmh);
 	if (ewmh)
 		free(ewmh);
 	stack_free(&del_reg);
+	ipc_cleanup();
 }
 
 /**
@@ -328,18 +316,6 @@ static void exec_config(char *conf_path)
 	setsid();
 	execl(conf_path, conf_path, NULL);
 	log_err("Couldn't execute the configuration file %s", conf_path);
-}
-
-/**
- * @brief Restart howm.
- *
- * @ingroup commands
- */
-void restart_howm(void)
-{
-	log_warn("Restarting.");
-	running = false;
-	restart = true;
 }
 
 /**
