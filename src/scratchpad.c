@@ -2,10 +2,10 @@
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 
-#include "scratchpad.h"
 #include "client.h"
 #include "helper.h"
 #include "howm.h"
+#include "scratchpad.h"
 
 /**
  * @file scratchpad.c
@@ -29,9 +29,9 @@ static client_t *scratchpad;
  *
  * @param s The stack that needs to have its contents allocated.
  */
-void stack_init(struct stack *s)
-{
-	s->contents = (client_t **)malloc(sizeof(client_t) * conf.delete_register_size);
+void stack_init(struct stack *s) {
+	s->contents =
+	    (client_t **)malloc(sizeof(client_t) * conf.delete_register_size);
 	if (!s->contents) {
 		log_err("Failed to allocate memory for stack.");
 		exit(EXIT_FAILURE);
@@ -43,8 +43,7 @@ void stack_init(struct stack *s)
  *
  * @param s The stack that needs to have its contents freed.
  */
-void stack_free(struct stack *s)
-{
+void stack_free(struct stack *s) {
 	free(s->contents);
 	s->contents = NULL;
 }
@@ -56,8 +55,7 @@ void stack_free(struct stack *s)
  * @param c The client to be pushed on. This client is treated as the head of a
  * linked list.
  */
-void stack_push(struct stack *s, client_t *c)
-{
+void stack_push(struct stack *s, client_t *c) {
 	if (!c || !s) {
 		return;
 	} else if (s->size >= conf.delete_register_size) {
@@ -75,8 +73,7 @@ void stack_push(struct stack *s, client_t *c)
  * @return The client that was at the top of the stack. It acts as the head of
  * the linked list of clients.
  */
-client_t *stack_pop(struct stack *s)
-{
+client_t *stack_pop(struct stack *s) {
 	if (!s) {
 		return NULL;
 	} else if (s->size == 0) {
@@ -91,22 +88,20 @@ client_t *stack_pop(struct stack *s)
  *
  * @ingroup commands
  */
-void send_to_scratchpad(void)
-{
+void send_to_scratchpad(void) {
 	client_t *c = mon->ws->c;
 
-	if (scratchpad || !c)
-		return;
+	if (scratchpad || !c) return;
 
 	log_info("Sending client <%p> to scratchpad", c);
-	if (prev_client(c, mon->ws))
-		prev_client(c, mon->ws)->next = c->next;
+	if (prev_client(c, mon->ws)) prev_client(c, mon->ws)->next = c->next;
 
 	/* TODO: This should be in a reusable function. */
 	if (c == mon->ws->prev_foc)
 		mon->ws->prev_foc = prev_client(mon->ws->c, mon->ws);
 	if (c == mon->ws->c || !mon->ws->head->next)
-		mon->ws->c = mon->ws->prev_foc ? mon->ws->prev_foc : mon->ws->head;
+		mon->ws->c =
+		    mon->ws->prev_foc ? mon->ws->prev_foc : mon->ws->head;
 	if (c == mon->ws->head) {
 		mon->ws->head = c->next;
 		mon->ws->c = c->next;
@@ -124,10 +119,8 @@ void send_to_scratchpad(void)
  *
  * @ingroup commands
  */
-void get_from_scratchpad(void)
-{
-	if (!scratchpad)
-		return;
+void get_from_scratchpad(void) {
+	if (!scratchpad) return;
 	/* TODO: This should be in a reusable function. */
 	if (!mon->ws->head)
 		mon->ws->head = scratchpad;
@@ -145,8 +138,11 @@ void get_from_scratchpad(void)
 	mon->ws->c->is_floating = true;
 	mon->ws->c->rect.width = conf.scratchpad_width;
 	mon->ws->c->rect.height = conf.scratchpad_height;
-	mon->ws->c->rect.x = (mon->rect.width / 2) - (mon->ws->c->rect.width / 2);
-	mon->ws->c->rect.y = (mon->rect.height - mon->ws->bar_height - mon->ws->c->rect.height) / 2;
+	mon->ws->c->rect.x =
+	    (mon->rect.width / 2) - (mon->ws->c->rect.width / 2);
+	mon->ws->c->rect.y =
+	    (mon->rect.height - mon->ws->bar_height - mon->ws->c->rect.height) /
+	    2;
 
 	xcb_map_window(dpy, mon->ws->c->win);
 	update_focused_client(mon->ws->c);

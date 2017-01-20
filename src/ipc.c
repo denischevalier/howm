@@ -1,9 +1,9 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "client.h"
@@ -44,8 +44,7 @@ static bool ipc_arg_to_bool(char *arg, int *err);
  *
  * @return A socket file descriptor.
  */
-int ipc_init(void)
-{
+int ipc_init(void) {
 	struct sockaddr_un addr;
 	char *sp = NULL;
 	char sock_path[256];
@@ -69,7 +68,7 @@ int ipc_init(void)
 		exit(EXIT_FAILURE);
 	}
 
-	if (bind(sock_fd, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+	if (bind(sock_fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
 		log_err("Couldn't bind a name to the socket.");
 		exit(EXIT_FAILURE);
 	}
@@ -85,8 +84,7 @@ int ipc_init(void)
 /**
  * @brief Delete the UNIX socket file.
  */
-void ipc_cleanup(void)
-{
+void ipc_cleanup(void) {
 	char *sp = getenv(ENV_SOCK_VAR);
 
 	if (sp)
@@ -104,8 +102,7 @@ void ipc_cleanup(void)
  *
  * @return An error code resulting from processing msg.
  */
-int ipc_process(char *msg, int len)
-{
+int ipc_process(char *msg, int len) {
 	int err = IPC_ERR_NONE;
 	char **args = ipc_process_args(msg, len, &err);
 
@@ -129,31 +126,35 @@ int ipc_process(char *msg, int len)
  * @return The error code, as set by this function itself or those that it
  * calls.
  */
-static int ipc_process_function(char **args)
-{
+static int ipc_process_function(char **args) {
 	int err = IPC_ERR_NONE;
 	int i = 0;
 
-#define CALL_INT(func, arg, lower, upper) \
-	do { \
+#define CALL_INT(func, arg, lower, upper)                    \
+	do {                                                 \
 		i = ipc_arg_to_int(arg, &err, lower, upper); \
-		if (err == IPC_ERR_NONE) \
-			func(i); \
+		if (err == IPC_ERR_NONE) func(i);            \
 	} while (0)
 
-	if (strncmp(args[0], "teleport_client", strlen("teleport_client")) == 0) {
+	if (strncmp(args[0], "teleport_client", strlen("teleport_client")) ==
+	    0) {
 		CALL_INT(teleport_client, args[1], TOP_LEFT, BOTTOM_RIGHT);
 	} else if (strncmp(args[0], "quit", strlen("quit")) == 0) {
 		CALL_INT(quit, args[1], EXIT_SUCCESS, EXIT_FAILURE);
-	} else if (strncmp(args[0], "resize_float_width", strlen("resize_float_width")) == 0) {
+	} else if (strncmp(args[0], "resize_float_width",
+			   strlen("resize_float_width")) == 0) {
 		CALL_INT(resize_float_width, args[1], -100, 100);
-	} else if (strncmp(args[0], "resize_float_height", strlen("resize_float_height")) == 0) {
+	} else if (strncmp(args[0], "resize_float_height",
+			   strlen("resize_float_height")) == 0) {
 		CALL_INT(resize_float_height, args[1], -100, 100);
-	} else if (strncmp(args[0], "move_float_x", strlen("move_float_x")) == 0) {
+	} else if (strncmp(args[0], "move_float_x", strlen("move_float_x")) ==
+		   0) {
 		CALL_INT(move_float_x, args[1], -100, 100);
-	} else if (strncmp(args[0], "move_float_y", strlen("move_float_y")) == 0) {
+	} else if (strncmp(args[0], "move_float_y", strlen("move_float_y")) ==
+		   0) {
 		CALL_INT(move_float_y, args[1], -100, 100);
-	} else if (strncmp(args[0], "resize_master", strlen("resize_master")) == 0) {
+	} else if (strncmp(args[0], "resize_master", strlen("resize_master")) ==
+		   0) {
 		CALL_INT(resize_master, args[1], -100, 100);
 	} else if (strncmp(args[0], "count", strlen("count")) == 0) {
 		CALL_INT(count, args[1], 1, 9);
@@ -162,18 +163,20 @@ static int ipc_process_function(char **args)
 /*TODO: Don't do this - we should have a neat wrapper function
  * for functions requiring a workspace pointer.
  */
-#define CALL_WORKSPACE(func, arg, lower, upper) \
-	do { \
+#define CALL_WORKSPACE(func, arg, lower, upper)              \
+	do {                                                 \
 		i = ipc_arg_to_int(arg, &err, lower, upper); \
-		if (err == IPC_ERR_NONE) { \
-			func(index_to_workspace(mon, i)); \
-		} \
+		if (err == IPC_ERR_NONE) {                   \
+			func(index_to_workspace(mon, i));    \
+		}                                            \
 	} while (0)
 
 	} else if (strncmp(args[0], "change_ws", strlen("change_ws")) == 0) {
 		CALL_WORKSPACE(change_ws, args[1], 0, mon->workspace_cnt - 1);
-	} else if (strncmp(args[0], "current_to_ws", strlen("current_to_ws")) == 0) {
-		CALL_WORKSPACE(current_to_ws, args[1], 0, mon->workspace_cnt - 1);
+	} else if (strncmp(args[0], "current_to_ws", strlen("current_to_ws")) ==
+		   0) {
+		CALL_WORKSPACE(current_to_ws, args[1], 0,
+			       mon->workspace_cnt - 1);
 #undef CALL_WORKSPACE
 	} else if (strncmp(args[0], "add_ws", strlen("add_ws")) == 0) {
 		add_ws(mon);
@@ -181,51 +184,67 @@ static int ipc_process_function(char **args)
 		i = ipc_arg_to_int(args[1], &err, 0, mon->workspace_cnt - 1);
 		if (err == IPC_ERR_NONE)
 			remove_ws(mon, index_to_workspace(mon, i));
-	} else if (strncmp(args[0], "move_current_down", strlen("move_current_down")) == 0) {
+	} else if (strncmp(args[0], "move_current_down",
+			   strlen("move_current_down")) == 0) {
 		move_current_down();
-	} else if (strncmp(args[0], "move_current_up", strlen("move_current_up")) == 0) {
+	} else if (strncmp(args[0], "move_current_up",
+			   strlen("move_current_up")) == 0) {
 		move_current_up();
-	} else if (strncmp(args[0], "focus_monitor", strlen("focus_monitor")) == 0) {
+	} else if (strncmp(args[0], "focus_monitor", strlen("focus_monitor")) ==
+		   0) {
 		i = ipc_arg_to_int(args[1], &err, 0, mon_cnt - 1);
-		if (err == IPC_ERR_NONE)
-			focus_monitor(index_to_monitor(i));
-	} else if (strncmp(args[0], "focus_next_client", strlen("focus_next_client")) == 0) {
+		if (err == IPC_ERR_NONE) focus_monitor(index_to_monitor(i));
+	} else if (strncmp(args[0], "focus_next_client",
+			   strlen("focus_next_client")) == 0) {
 		focus_next_client();
-	} else if (strncmp(args[0], "focus_prev_client", strlen("focus_prev_client")) == 0) {
+	} else if (strncmp(args[0], "focus_prev_client",
+			   strlen("focus_prev_client")) == 0) {
 		focus_prev_client();
-	} else if (strncmp(args[0], "toggle_float", strlen("toggle_float")) == 0) {
+	} else if (strncmp(args[0], "toggle_float", strlen("toggle_float")) ==
+		   0) {
 		toggle_float();
-	} else if (strncmp(args[0], "toggle_fullscreen", strlen("toggle_fullscreen")) == 0) {
+	} else if (strncmp(args[0], "toggle_fullscreen",
+			   strlen("toggle_fullscreen")) == 0) {
 		toggle_fullscreen();
-	} else if (strncmp(args[0], "focus_urgent", strlen("focus_urgent")) == 0) {
+	} else if (strncmp(args[0], "focus_urgent", strlen("focus_urgent")) ==
+		   0) {
 		focus_urgent();
-	} else if (strncmp(args[0], "send_to_scratchpad", strlen("send_to_scratchpad")) == 0) {
+	} else if (strncmp(args[0], "send_to_scratchpad",
+			   strlen("send_to_scratchpad")) == 0) {
 		send_to_scratchpad();
-	} else if (strncmp(args[0], "get_from_scratchpad", strlen("get_from_scratchpad")) == 0) {
+	} else if (strncmp(args[0], "get_from_scratchpad",
+			   strlen("get_from_scratchpad")) == 0) {
 		get_from_scratchpad();
-	} else if (strncmp(args[0], "make_master", strlen("make_master")) == 0) {
+	} else if (strncmp(args[0], "make_master", strlen("make_master")) ==
+		   0) {
 		make_master();
 	} else if (strncmp(args[0], "toggle_bar", strlen("toggle_bar")) == 0) {
 		toggle_bar();
-	} else if (strncmp(args[0], "focus_next_ws", strlen("focus_next_ws")) == 0) {
+	} else if (strncmp(args[0], "focus_next_ws", strlen("focus_next_ws")) ==
+		   0) {
 		focus_next_ws();
-	} else if (strncmp(args[0], "focus_prev_ws", strlen("focus_prev_ws")) == 0) {
+	} else if (strncmp(args[0], "focus_prev_ws", strlen("focus_prev_ws")) ==
+		   0) {
 		focus_prev_ws();
-	} else if (strncmp(args[0], "focus_last_ws", strlen("focus_last_ws")) == 0) {
+	} else if (strncmp(args[0], "focus_last_ws", strlen("focus_last_ws")) ==
+		   0) {
 		focus_last_ws();
 	} else if (strncmp(args[0], "paste", strlen("paste")) == 0) {
 		paste();
-	} else if (strncmp(args[0], "change_layout", strlen("change_layout")) == 0) {
+	} else if (strncmp(args[0], "change_layout", strlen("change_layout")) ==
+		   0) {
 		/* TODO: Allow the layout of an arbitrary monitor to be changed
 		 * without having to focus it. */
 		i = ipc_arg_to_int(args[0], &err, ZOOM, END_LAYOUT - 1);
-		if (err == IPC_ERR_NONE)
-			change_layout(mon, i);
-	} else if (strncmp(args[0], "next_layout", strlen("next_layout")) == 0) {
+		if (err == IPC_ERR_NONE) change_layout(mon, i);
+	} else if (strncmp(args[0], "next_layout", strlen("next_layout")) ==
+		   0) {
 		next_layout(mon);
-	} else if (strncmp(args[0], "prev_layout", strlen("prev_layout")) == 0) {
+	} else if (strncmp(args[0], "prev_layout", strlen("prev_layout")) ==
+		   0) {
 		prev_layout(mon);
-	} else if (strncmp(args[0], "last_layout", strlen("last_layout")) == 0) {
+	} else if (strncmp(args[0], "last_layout", strlen("last_layout")) ==
+		   0) {
 		last_layout(mon);
 	} else if (strncmp(args[0], "spawn", strlen("spawn")) == 0) {
 		spawn(args + 1);
@@ -237,19 +256,24 @@ static int ipc_process_function(char **args)
 	} else if (strncmp(args[0], "op_move_up", strlen("op_move_up")) == 0) {
 		operator_func = op_move_up;
 		cur_state = COUNT_STATE;
-	} else if (strncmp(args[0], "op_move_down", strlen("op_move_down")) == 0) {
+	} else if (strncmp(args[0], "op_move_down", strlen("op_move_down")) ==
+		   0) {
 		operator_func = op_move_down;
 		cur_state = COUNT_STATE;
-	} else if (strncmp(args[0], "op_focus_down", strlen("op_focus_down")) == 0) {
+	} else if (strncmp(args[0], "op_focus_down", strlen("op_focus_down")) ==
+		   0) {
 		operator_func = op_focus_down;
 		cur_state = COUNT_STATE;
-	} else if (strncmp(args[0], "op_focus_up", strlen("op_focus_up")) == 0) {
+	} else if (strncmp(args[0], "op_focus_up", strlen("op_focus_up")) ==
+		   0) {
 		operator_func = op_focus_up;
 		cur_state = COUNT_STATE;
-	} else if (strncmp(args[0], "op_shrink_gaps", strlen("op_shrink_gaps")) == 0) {
+	} else if (strncmp(args[0], "op_shrink_gaps",
+			   strlen("op_shrink_gaps")) == 0) {
 		operator_func = op_shrink_gaps;
 		cur_state = COUNT_STATE;
-	} else if (strncmp(args[0], "op_grow_gaps", strlen("op_grow_gaps")) == 0) {
+	} else if (strncmp(args[0], "op_grow_gaps", strlen("op_grow_gaps")) ==
+		   0) {
 		operator_func = op_grow_gaps;
 		cur_state = COUNT_STATE;
 	} else if (strncmp(args[0], "op_cut", strlen("op_cut")) == 0) {
@@ -277,8 +301,7 @@ static int ipc_process_function(char **args)
  *
  * @return The decimal representation of arg.
  */
-static int ipc_arg_to_int(char *arg, int *err, int lower, int upper)
-{
+static int ipc_arg_to_int(char *arg, int *err, int lower, int upper) {
 	int ret = 0;
 
 	if (!arg) {
@@ -311,8 +334,7 @@ static int ipc_arg_to_int(char *arg, int *err, int lower, int upper)
  * @return A pointer to an array of strings, each one representing an argument
  * that has been passed over a UNIX socket.
  */
-static char **ipc_process_args(char *msg, int len, int *err)
-{
+static char **ipc_process_args(char *msg, int len, int *err) {
 	int argc = 0, i = 0, arg_start = 0, lim = 2;
 	char **args = malloc(lim * sizeof(char *));
 
@@ -328,7 +350,8 @@ static char **ipc_process_args(char *msg, int len, int *err)
 
 			if (argc == lim) {
 				lim *= 2;
-				char **new = realloc(args, lim * sizeof(char *));
+				char **new =
+				    realloc(args, lim * sizeof(char *));
 
 				if (!new) {
 					*err = IPC_ERR_ALLOC;
@@ -351,7 +374,8 @@ static char **ipc_process_args(char *msg, int len, int *err)
 		args = new;
 	}
 
-	/* The end of the array should be NULL, as the whole array can be passed to
+	/* The end of the array should be NULL, as the whole array can be passed
+	 * to
 	 * spawn() and that expects a NULL terminated array.
 	 *
 	 * Use argc here as args are zero indexed. */
@@ -374,20 +398,17 @@ static char **ipc_process_args(char *msg, int len, int *err)
  *
  * @return err containing the error (or lack of) that has occurred.
  */
-static int ipc_process_config(char **args)
-{
+static int ipc_process_config(char **args) {
 	int err = IPC_ERR_NONE;
 	int i = 0;
 	bool b = false;
 
-	if (!args[0] || !args[1])
-		return IPC_ERR_TOO_FEW_ARGS;
+	if (!args[0] || !args[1]) return IPC_ERR_TOO_FEW_ARGS;
 
-#define SET_INT(opt, arg, lower, upper) \
-	do { \
+#define SET_INT(opt, arg, lower, upper)                      \
+	do {                                                 \
 		i = ipc_arg_to_int(arg, &err, lower, upper); \
-			if (err == IPC_ERR_NONE) \
-				opt = i; \
+		if (err == IPC_ERR_NONE) opt = i;            \
 	} while (0)
 
 	if (strcmp("border_px", args[0]) == 0)
@@ -405,11 +426,10 @@ static int ipc_process_config(char **args)
 	else if (strcmp("bar_height", args[0]) == 0)
 		SET_INT(conf.bar_height, args[1], 0, mon->rect.height);
 #undef SET_INT
-#define SET_BOOL(opt, arg) \
-	do { \
-		b = ipc_arg_to_bool(arg, &err); \
-			if (err == IPC_ERR_NONE) \
-				opt = b; \
+#define SET_BOOL(opt, arg)                        \
+	do {                                      \
+		b = ipc_arg_to_bool(arg, &err);   \
+		if (err == IPC_ERR_NONE) opt = b; \
 	} while (0)
 
 	else if (strcmp("focus_mouse", args[0]) == 0)
@@ -425,13 +445,13 @@ static int ipc_process_config(char **args)
 	else if (strcmp("bar_bottom", args[0]) == 0)
 		SET_BOOL(conf.bar_bottom, args[1]);
 #undef SET_BOOL
-#define SET_COLOUR(opt, arg) \
-	do { \
-		if (strlen(arg) > 7) \
+#define SET_COLOUR(opt, arg)                          \
+	do {                                          \
+		if (strlen(arg) > 7)                  \
 			return IPC_ERR_ARG_TOO_LARGE; \
-		else if (strlen(arg) < 7) \
+		else if (strlen(arg) < 7)             \
 			return IPC_ERR_ARG_TOO_SMALL; \
-		opt = get_colour(arg); \
+		opt = get_colour(arg);                \
 	} while (0)
 
 	else if (strcmp("border_focus", args[0]) == 0)
@@ -459,15 +479,12 @@ static int ipc_process_config(char **args)
  *
  * @return A boolean, depending on whether the argument was true or false.
  */
-static bool ipc_arg_to_bool(char *arg, int *err)
-{
-	if (strcmp("true", arg) == 0
-			|| strcmp("t", arg) == 0
-			|| strcmp("1", arg) == 0) {
+static bool ipc_arg_to_bool(char *arg, int *err) {
+	if (strcmp("true", arg) == 0 || strcmp("t", arg) == 0 ||
+	    strcmp("1", arg) == 0) {
 		return true;
-	} else if (strcmp("false", arg) == 0
-			|| strcmp("f", arg) == 0
-			|| strcmp("0", arg) == 0) {
+	} else if (strcmp("false", arg) == 0 || strcmp("f", arg) == 0 ||
+		   strcmp("0", arg) == 0) {
 		return false;
 	} else {
 		*err = IPC_ERR_ARG_NOT_BOOL;

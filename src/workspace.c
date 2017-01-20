@@ -26,13 +26,10 @@
  * @param m The monitor that the workspace to be killed is on.
  * @param ws The workspace to be killed.
  */
-void kill_ws(monitor_t *m, workspace_t *ws)
-{
-	if (!ws || !ws->client_cnt)
-		return;
+void kill_ws(monitor_t *m, workspace_t *ws) {
+	if (!ws || !ws->client_cnt) return;
 
-	while (ws->head)
-		kill_client(m, ws, m->ws->head);
+	while (ws->head) kill_client(m, ws, m->ws->head);
 
 	log_info("Killed off workspace <%d>", workspace_to_index(ws));
 }
@@ -47,12 +44,9 @@ void kill_ws(monitor_t *m, workspace_t *ws)
  *
  * @return A corrected workspace number.
  */
-inline int correct_ws(unsigned int ws)
-{
-	if (ws > workspace_cnt)
-		return ws - workspace_cnt;
-	if (ws < 1)
-		return ws + workspace_cnt;
+inline int correct_ws(unsigned int ws) {
+	if (ws > workspace_cnt) return ws - workspace_cnt;
+	if (ws < 1) return ws + workspace_cnt;
 
 	return ws;
 }
@@ -74,14 +68,13 @@ inline int correct_ws(unsigned int ws)
  *
  * @return The workspace at ws+offset.
  */
-inline workspace_t *offset_ws(workspace_t *ws, int offset)
-{
+inline workspace_t *offset_ws(workspace_t *ws, int offset) {
 	workspace_t *ows = ws;
 	bool pos = offset > 0 ? true : false;
 
 	offset = abs(offset);
-	for (; ows != NULL && offset > 0; ows = pos ? ws->next
-					: ws->prev, offset--)
+	for (; ows != NULL && offset > 0;
+	     ows = pos ? ws->next : ws->prev, offset--)
 		;
 
 	return ows;
@@ -92,8 +85,7 @@ inline workspace_t *offset_ws(workspace_t *ws, int offset)
  *
  * @ingroup commands
  */
-void focus_prev_ws(void)
-{
+void focus_prev_ws(void) {
 	log_info("Focusing previous workspace");
 	change_ws(mon->ws->prev);
 }
@@ -103,8 +95,7 @@ void focus_prev_ws(void)
  *
  * @ingroup commands
  */
-void focus_last_ws(void)
-{
+void focus_last_ws(void) {
 	log_info("Focusing last workspace");
 	change_ws(mon->last_ws);
 }
@@ -114,8 +105,7 @@ void focus_last_ws(void)
  *
  * @ingroup commands
  */
-void focus_next_ws(void)
-{
+void focus_next_ws(void) {
 	log_info("Focusing previous workspace");
 	change_ws(mon->ws->next);
 }
@@ -127,19 +117,16 @@ void focus_next_ws(void)
  *
  * @ingroup commands
  */
-void change_ws(const workspace_t *ws)
-{
-	if (!ws)
-		return;
+void change_ws(const workspace_t *ws) {
+	if (!ws) return;
 
 	client_t *c = ws->head;
 
 	mon->last_ws = mon->ws;
-	log_debug("Changing from workspace <%d> to <%d>.", workspace_to_index(mon->last_ws),
-							workspace_to_index(ws));
+	log_debug("Changing from workspace <%d> to <%d>.",
+		  workspace_to_index(mon->last_ws), workspace_to_index(ws));
 
-	for (; c; c = c->next)
-		xcb_map_window(dpy, c->win);
+	for (; c; c = c->next) xcb_map_window(dpy, c->win);
 	for (c = mon->last_ws->head; c; c = c->next)
 		xcb_unmap_window(dpy, c->win);
 
@@ -148,8 +135,9 @@ void change_ws(const workspace_t *ws)
 	update_focused_client(mon->ws->c);
 
 	xcb_ewmh_set_current_desktop(ewmh, 0, workspace_to_index(ws));
-	xcb_ewmh_geometry_t workarea[] = { { 0, conf.bar_bottom ? 0 : ws->bar_height,
-				mon->rect.width, mon->rect.height - ws->bar_height } };
+	xcb_ewmh_geometry_t workarea[] = {
+	    {0, conf.bar_bottom ? 0 : ws->bar_height, mon->rect.width,
+	     mon->rect.height - ws->bar_height}};
 	xcb_ewmh_set_workarea(ewmh, 0, LENGTH(workarea), workarea);
 
 	howm_info();
@@ -162,16 +150,14 @@ void change_ws(const workspace_t *ws)
  *
  * @return The index of the workspace in the workspace list.
  */
-uint32_t workspace_to_index(const workspace_t *ws)
-{
+uint32_t workspace_to_index(const workspace_t *ws) {
 	monitor_t *m;
 	workspace_t *ows;
 	uint32_t i = 0;
 
 	for (m = mon_head; m != NULL; m = m->next)
 		for (ows = m->ws_head; ows != NULL; ows = ows->next, i++)
-			if (ws == ows)
-				return i;
+			if (ws == ows) return i;
 	return 0;
 }
 
@@ -183,8 +169,7 @@ uint32_t workspace_to_index(const workspace_t *ws)
  *
  * @return The workspace stored at the index of the workspaces list.
  */
-workspace_t *index_to_workspace(const monitor_t *m, uint32_t index)
-{
+workspace_t *index_to_workspace(const monitor_t *m, uint32_t index) {
 	workspace_t *ws = m->ws_head;
 
 	for (; index > 0 && ws != NULL; ws = ws->next, index--)
@@ -198,8 +183,7 @@ workspace_t *index_to_workspace(const monitor_t *m, uint32_t index)
  *
  * @param m The monitor that the workspace should be added on.
  */
-void add_ws(monitor_t *m)
-{
+void add_ws(monitor_t *m) {
 	workspace_t *ws = calloc(1, sizeof(workspace_t));
 
 	if (!ws) {
@@ -220,9 +204,8 @@ void add_ws(monitor_t *m)
 		m->ws_tail = ws;
 	}
 
-	log_info("Added workspace <%d> to monitor <%d>",
-			workspace_to_index(ws),
-			monitor_to_index(m));
+	log_info("Added workspace <%d> to monitor <%d>", workspace_to_index(ws),
+		 monitor_to_index(m));
 
 	m->workspace_cnt++;
 	xcb_ewmh_set_number_of_desktops(ewmh, 0, m->workspace_cnt);
@@ -234,31 +217,24 @@ void add_ws(monitor_t *m)
  * @param m The monitor that the workspace is on.
  * @param ws The workspace to be removed.
  */
-void remove_ws(monitor_t *m, workspace_t *ws)
-{
+void remove_ws(monitor_t *m, workspace_t *ws) {
 	kill_ws(m, ws);
-	if (m->ws == ws)
-		change_ws(m->last_ws ? m->last_ws : m->ws_head);
+	if (m->ws == ws) change_ws(m->last_ws ? m->last_ws : m->ws_head);
 
 	log_info("Removed workspace <%d>", workspace_to_index(ws));
 	/* Sort out the workspaces list */
-	if (ws->prev)
-		ws->prev->next = ws->next;
-	if (ws->next)
-		ws->next->prev = ws->prev;
+	if (ws->prev) ws->prev->next = ws->next;
+	if (ws->next) ws->next->prev = ws->prev;
 
 	/* Sort out the monitor list */
-	if (m->ws_head == ws)
-		m->ws_head = ws->next;
-	if (m->ws_tail == ws)
-		m->ws_tail = ws->prev;
+	if (m->ws_head == ws) m->ws_head = ws->next;
+	if (m->ws_tail == ws) m->ws_tail = ws->prev;
 
 	ws->head = ws->prev_foc = ws->c = NULL;
 	ws->next = ws->prev = NULL;
 
 	/* It seems reasonable to fall back to the first workspace */
-	if (m->last_ws == ws)
-		m->last_ws = m->ws_head;
+	if (m->last_ws == ws) m->last_ws = m->ws_head;
 
 	m->workspace_cnt--;
 	ewmh_set_current_workspace();

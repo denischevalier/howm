@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <xcb/randr.h>
 
-#include "monitor.h"
 #include "helper.h"
 #include "howm.h"
+#include "monitor.h"
 #include "workspace.h"
 #include "xcb_help.h"
 
@@ -24,8 +24,7 @@
  *
  * @return An initialised monitor.
  */
-monitor_t *create_monitor(xcb_rectangle_t rect)
-{
+monitor_t *create_monitor(xcb_rectangle_t rect) {
 	monitor_t *m = calloc(1, sizeof(monitor_t));
 
 	if (!m) {
@@ -43,8 +42,8 @@ monitor_t *create_monitor(xcb_rectangle_t rect)
 	}
 
 	log_info("Added monitor <%d> with dimensions: {%d, %d, %d, %d}",
-			monitor_to_index(m), m->rect.x, m->rect.y,
-			m->rect.width, m->rect.height);
+		 monitor_to_index(m), m->rect.x, m->rect.y, m->rect.width,
+		 m->rect.height);
 
 	mon_cnt++;
 
@@ -56,8 +55,7 @@ monitor_t *create_monitor(xcb_rectangle_t rect)
  *
  * @param m The monitor to be removed.
  */
-void remove_monitor(monitor_t *m)
-{
+void remove_monitor(monitor_t *m) {
 	monitor_t *next = m->next;
 	monitor_t *prev = m->prev;
 
@@ -65,19 +63,13 @@ void remove_monitor(monitor_t *m)
 
 	mon_cnt--;
 
-	while (m->ws_head)
-		remove_ws(m, m->ws_head);
+	while (m->ws_head) remove_ws(m, m->ws_head);
 
-	if (prev)
-		prev->next = next;
-	if (next)
-		next->prev = prev;
-	if (m == mon_head)
-		mon_head = next;
-	if (m == mon_tail)
-		mon_tail = prev;
-	if (m == mon)
-		mon = prev ? prev : next;
+	if (prev) prev->next = next;
+	if (next) next->prev = prev;
+	if (m == mon_head) mon_head = next;
+	if (m == mon_tail) mon_tail = prev;
+	if (m == mon) mon = prev ? prev : next;
 
 	/* TODO: Maybe we'll need to refocus? */
 
@@ -89,10 +81,8 @@ void remove_monitor(monitor_t *m)
  *
  * @param m The monitor to be focused.
  */
-void focus_monitor(monitor_t *m)
-{
-	if (!m || mon == m)
-		return;
+void focus_monitor(monitor_t *m) {
+	if (!m || mon == m) return;
 
 	mon = m;
 
@@ -101,8 +91,8 @@ void focus_monitor(monitor_t *m)
 	center_pointer(m->rect);
 
 	if (mon->ws && mon->ws->c)
-		xcb_set_input_focus(dpy, XCB_INPUT_FOCUS_POINTER_ROOT, mon->ws->c->win,
-			    XCB_CURRENT_TIME);
+		xcb_set_input_focus(dpy, XCB_INPUT_FOCUS_POINTER_ROOT,
+				    mon->ws->c->win, XCB_CURRENT_TIME);
 
 	ewmh_set_current_workspace();
 }
@@ -114,14 +104,12 @@ void focus_monitor(monitor_t *m)
  *
  * @return The index of the monitor in the monitor list.
  */
-uint32_t monitor_to_index(const monitor_t *m)
-{
+uint32_t monitor_to_index(const monitor_t *m) {
 	monitor_t *om;
 	uint32_t i = 0;
 
 	for (om = mon_head; om != NULL; om = om->next, i++)
-		if (om == m)
-			return i;
+		if (om == m) return i;
 	return 0;
 }
 
@@ -132,8 +120,7 @@ uint32_t monitor_to_index(const monitor_t *m)
  *
  * @return The monitor stored at the index of the monitors list.
  */
-monitor_t *index_to_monitor(uint32_t index)
-{
+monitor_t *index_to_monitor(uint32_t index) {
 	monitor_t *m;
 
 	for (m = mon_head; index > 0 && m != NULL; m = m->next, index--)
@@ -145,9 +132,9 @@ monitor_t *index_to_monitor(uint32_t index)
 /**
  * @brief Create a single monitor for use with default X11.
  */
-static void scan_x11_monitor(void)
-{
-	monitor_t *m = create_monitor((xcb_rectangle_t) { 0, 0, screen_width, screen_height });
+static void scan_x11_monitor(void) {
+	monitor_t *m = create_monitor(
+	    (xcb_rectangle_t){0, 0, screen_width, screen_height});
 
 	add_ws(m);
 }
@@ -163,8 +150,7 @@ static void scan_x11_monitor(void)
  *
  * @return True if Xrandr is detected and monitors are created.
  */
-static bool scan_xrandr_monitors(void)
-{
+static bool scan_xrandr_monitors(void) {
 	xcb_randr_output_t *outputs;
 	monitor_t *m;
 	unsigned int i, nr_outputs = 0;
@@ -176,7 +162,8 @@ static bool scan_xrandr_monitors(void)
 	xcb_randr_get_output_info_cookie_t cookies[nr_outputs];
 
 	for (i = 0; i < nr_outputs; i++)
-		cookies[i] = xcb_randr_get_output_info(dpy, outputs[i], XCB_CURRENT_TIME);
+		cookies[i] = xcb_randr_get_output_info(dpy, outputs[i],
+						       XCB_CURRENT_TIME);
 
 	for (i = 0; i < nr_outputs; i++) {
 		oir = xcb_randr_get_output_info_reply(dpy, cookies[i], NULL);
@@ -188,9 +175,7 @@ static bool scan_xrandr_monitors(void)
 		rect = output_reply_to_rect(oir);
 		free(oir);
 
-		if (rect.x == -1 && rect.y == -1)
-			continue;
-
+		if (rect.x == -1 && rect.y == -1) continue;
 
 		m = create_monitor(rect);
 		add_ws(m);
@@ -208,13 +193,11 @@ static bool scan_xrandr_monitors(void)
  *
  * @return The monitor with an xcb output id matching the param.
  */
-static monitor_t *randr_output_to_monitor(xcb_randr_output_t output)
-{
+static monitor_t *randr_output_to_monitor(xcb_randr_output_t output) {
 	monitor_t *m;
 
 	for (m = mon_head; m; m = m->next)
-		if (m->output == output)
-			return m;
+		if (m->output == output) return m;
 	return NULL;
 }
 
@@ -225,14 +208,14 @@ static monitor_t *randr_output_to_monitor(xcb_randr_output_t output)
  *
  * @return The monitor containing the point, or NULL.
  */
-monitor_t *point_to_monitor(xcb_point_t point)
-{
+monitor_t *point_to_monitor(xcb_point_t point) {
 	monitor_t *m = mon_head;
 
 	for (; m != NULL; m = m->next) {
-		if (point.x >= m->rect.x && point.x < (m->rect.width + m->rect.x)
-				&& point.y >= m->rect.y
-				&& point.y < (m->rect.height + m->rect.y))
+		if (point.x >= m->rect.x &&
+		    point.x < (m->rect.width + m->rect.x) &&
+		    point.y >= m->rect.y &&
+		    point.y < (m->rect.height + m->rect.y))
 			return m;
 	}
 
@@ -242,8 +225,6 @@ monitor_t *point_to_monitor(xcb_point_t point)
 /**
  * @brief Initialise a monitor for each supported screen.
  */
-void scan_monitors(void)
-{
-	if (!scan_xrandr_monitors())
-		scan_x11_monitor();
+void scan_monitors(void) {
+	if (!scan_xrandr_monitors()) scan_x11_monitor();
 }

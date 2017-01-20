@@ -23,22 +23,17 @@ static void stack(monitor_t *m);
 static void grid(monitor_t *m);
 static void zoom(monitor_t *m);
 
-static void(*layout_handler[]) (monitor_t *m) = {
-	[GRID] = grid,
-	[ZOOM] = zoom,
-	[HSTACK] = stack,
-	[VSTACK] = stack
-};
+static void (*layout_handler[])(monitor_t *m) = {[GRID] = grid, [ZOOM] = zoom,
+						 [HSTACK] = stack,
+						 [VSTACK] = stack};
 
 /**
  * @brief Call the appropriate layout handler for each layout.
  *
  * @param m The monitor to be arranged.
  */
-void arrange_windows(monitor_t *m)
-{
-	if (!m->ws->head)
-		return;
+void arrange_windows(monitor_t *m) {
+	if (!m->ws->head) return;
 	log_debug("Arranging windows");
 	layout_handler[m->ws->head->next ? m->ws->layout : ZOOM](mon);
 	howm_info();
@@ -49,13 +44,13 @@ void arrange_windows(monitor_t *m)
  *
  * @param m The monitor to be arranged.
  */
-static void grid(monitor_t *m)
-{
+static void grid(monitor_t *m) {
 	int n = get_non_tff_count(m);
 	client_t *c = NULL;
 	int cols, rows, i = -1, col_cnt = 0, row_cnt = 0;
 	uint16_t col_w;
-	uint16_t client_y = conf.bar_bottom ? m->rect.y : m->rect.y + m->ws->bar_height;
+	uint16_t client_y =
+	    conf.bar_bottom ? m->rect.y : m->rect.y + m->ws->bar_height;
 	uint16_t col_h = m->rect.height - m->ws->bar_height;
 
 	if (n <= 1) {
@@ -66,8 +61,7 @@ static void grid(monitor_t *m)
 	log_info("Arranging %d clients in grid layout", n);
 
 	for (cols = 1; cols <= n / 2; cols++)
-		if (cols * cols >= n)
-			break;
+		if (cols * cols >= n) break;
 
 	rows = n / cols;
 	col_w = m->rect.width / cols;
@@ -77,11 +71,10 @@ static void grid(monitor_t *m)
 		else
 			i++;
 
-		if (cols - (n % cols) < (i / rows) + 1)
-			rows = n / cols + 1;
+		if (cols - (n % cols) < (i / rows) + 1) rows = n / cols + 1;
 		change_client_geom(c, (col_cnt * col_w) + m->rect.x,
-				client_y + (row_cnt * col_h / rows),
-				col_w, (col_h / rows));
+				   client_y + (row_cnt * col_h / rows), col_w,
+				   (col_h / rows));
 		if (++row_cnt >= rows) {
 			row_cnt = 0;
 			col_cnt++;
@@ -98,8 +91,7 @@ static void grid(monitor_t *m)
  *
  * @param m The monitor to be arranged.
  */
-static void zoom(monitor_t *m)
-{
+static void zoom(monitor_t *m) {
 	client_t *c;
 
 	log_info("Arranging clients in zoom format");
@@ -111,9 +103,11 @@ static void zoom(monitor_t *m)
 
 	for (c = m->ws->head; c; c = c->next)
 		if (!FFT(c))
-			change_client_geom(c, m->rect.x, conf.bar_bottom
-					? m->rect.y : m->rect.y + m->ws->bar_height,
-					m->rect.width, m->rect.height - m->ws->bar_height);
+			change_client_geom(
+			    c, m->rect.x,
+			    conf.bar_bottom ? m->rect.y
+					    : m->rect.y + m->ws->bar_height,
+			    m->rect.width, m->rect.height - m->ws->bar_height);
 	draw_clients();
 }
 
@@ -123,15 +117,15 @@ static void zoom(monitor_t *m)
  *
  * @param m The monitor to be arranged.
  */
-static void stack(monitor_t *m)
-{
+static void stack(monitor_t *m) {
 	client_t *c = get_first_non_tff(m);
 	bool vert = (m->ws->layout == VSTACK);
 	uint16_t h = m->rect.height - m->ws->bar_height;
 	uint16_t w = m->rect.width;
 	int n = get_non_tff_count(m);
 	uint16_t client_x = m->rect.x, client_span = 0;
-	uint16_t client_y = conf.bar_bottom ? m->rect.y : m->rect.y + m->ws->bar_height;
+	uint16_t client_y =
+	    conf.bar_bottom ? m->rect.y : m->rect.y + m->ws->bar_height;
 	uint16_t ms = (vert ? w : h) * m->ws->master_ratio;
 	/* The size of the direction the clients will be stacked in. e.g.
 	 *
@@ -165,25 +159,24 @@ static void stack(monitor_t *m)
 
 	log_info("Arranging %d clients in %sstack layout", n, vert ? "v" : "h");
 	if (vert) {
-		change_client_geom(c, m->rect.x, client_y,
-			    ms, span);
+		change_client_geom(c, m->rect.x, client_y, ms, span);
 	} else {
-		change_client_geom(c, m->rect.x, conf.bar_bottom ? m->rect.y : m->rect.y + m->ws->bar_height,
-			span, ms);
+		change_client_geom(
+		    c, m->rect.x,
+		    conf.bar_bottom ? m->rect.y : m->rect.y + m->ws->bar_height,
+		    span, ms);
 	}
 
 	for (c = c->next; c; c = c->next) {
-		if (FFT(c))
-			continue;
+		if (FFT(c)) continue;
 		if (vert) {
 			change_client_geom(c, m->rect.x + ms, client_y,
-				    m->rect.width - ms,
-				    client_span);
+					   m->rect.width - ms, client_span);
 			client_y += client_span;
 		} else {
-			change_client_geom(c, client_x, m->rect.y + ms,
-				    client_span,
-				    m->rect.height - m->ws->bar_height - ms);
+			change_client_geom(
+			    c, client_x, m->rect.y + ms, client_span,
+			    m->rect.height - m->ws->bar_height - ms);
 			client_x += client_span;
 		}
 	}
@@ -196,13 +189,13 @@ static void stack(monitor_t *m)
  * @param m The monitor to be arranged.
  * @param layout Represents the layout that should be used.
  */
-void change_layout(monitor_t *m, const int layout)
-{
+void change_layout(monitor_t *m, const int layout) {
 	if (layout == m->ws->layout || layout >= END_LAYOUT || layout < ZOOM)
 		return;
 	m->ws->layout = layout;
 	update_focused_client(m->ws->c);
-	log_info("Changed layout from %d to %d", m->ws->last_layout,  m->ws->layout);
+	log_info("Changed layout from %d to %d", m->ws->last_layout,
+		 m->ws->layout);
 	m->ws->last_layout = m->ws->layout;
 }
 
@@ -212,8 +205,7 @@ void change_layout(monitor_t *m, const int layout)
  * @ingroup commands
  * @param m The monitor to be arranged.
  */
-void prev_layout(monitor_t *m)
-{
+void prev_layout(monitor_t *m) {
 	int i = m->ws->layout < 1 ? END_LAYOUT - 1 : m->ws->layout - 1;
 
 	log_info("Changing to previous layout (%d)", i);
@@ -226,8 +218,7 @@ void prev_layout(monitor_t *m)
  * @param m The monitor to be arranged.
  * @ingroup commands
  */
-void next_layout(monitor_t *m)
-{
+void next_layout(monitor_t *m) {
 	int i = (m->ws->layout + 1) % END_LAYOUT;
 
 	log_info("Changing to layout (%d)", i);
@@ -240,8 +231,7 @@ void next_layout(monitor_t *m)
  * @param m The monitor to be arranged.
  * @ingroup commands
  */
-void last_layout(monitor_t *m)
-{
+void last_layout(monitor_t *m) {
 	log_info("Changing to last layout (%d)", m->ws->last_layout);
 	change_layout(m, m->ws->last_layout);
 }

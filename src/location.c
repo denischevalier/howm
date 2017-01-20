@@ -1,5 +1,5 @@
-#include "howm.h"
 #include "location.h"
+#include "howm.h"
 
 /**
  * @file location.c
@@ -21,8 +21,7 @@
  *
  * @return True upon finding the window, False otherwise.
  */
-bool loc_win(location_t *r_loc, xcb_window_t win)
-{
+bool loc_win(location_t *r_loc, xcb_window_t win) {
 	monitor_t *m;
 	workspace_t *ws;
 	client_t *c;
@@ -49,10 +48,8 @@ bool loc_win(location_t *r_loc, xcb_window_t win)
  *
  * @return True upon finding the client, False otherwise.
  */
-inline bool loc_client(location_t *r_loc, client_t *c)
-{
-	if (c)
-		return loc_win(r_loc, c->win);
+inline bool loc_client(location_t *r_loc, client_t *c) {
+	if (c) return loc_win(r_loc, c->win);
 
 	return false;
 }

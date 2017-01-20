@@ -30,8 +30,9 @@
  */
 struct stack {
 	unsigned int size; /**< The amount of items in the stack. */
-	client_t **contents; /**< The contents is an array of linked lists. Storage
-			is malloced later as we don't know the size yet.*/
+	client_t *
+	    *contents; /**< The contents is an array of linked lists. Storage
+		  is malloced later as we don't know the size yet.*/
 };
 
 extern struct stack del_reg;

@@ -18,8 +18,9 @@
 
 /** Calculates a mask that can be applied to a window in order to reconfigure a
  * window. */
-#define MOVE_RESIZE_MASK (XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | \
-			  XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT)
+#define MOVE_RESIZE_MASK                                                       \
+	(XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y | XCB_CONFIG_WINDOW_WIDTH | \
+	 XCB_CONFIG_WINDOW_HEIGHT)
 /** Calculates the length of an array. */
 #define LENGTH(x) (unsigned int)(sizeof(x) / sizeof(*x))
 /** Checks to see if a client is floating, fullscreen or transient. */
@@ -54,30 +55,44 @@
 #define LOG_NONE 5
 
 #if LOG_LEVEL == LOG_DEBUG
-#define log_debug(M, ...) fprintf(stderr, "[DEBUG] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_debug(M, ...)                                              \
+	fprintf(stderr, "[DEBUG] (%s:%d) " M "\n", __FILE__, __LINE__, \
+		##__VA_ARGS__)
 #else
-#define log_debug(x, ...) do {} while (0)
+#define log_debug(x, ...) \
+	do {              \
+	} while (0)
 #endif
 
-
 #if LOG_LEVEL <= LOG_INFO
-#define log_info(M, ...) fprintf(stderr, "[INFO] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_info(M, ...)                                              \
+	fprintf(stderr, "[INFO] (%s:%d) " M "\n", __FILE__, __LINE__, \
+		##__VA_ARGS__)
 #else
-#define log_info(x, ...) do {} while (0)
+#define log_info(x, ...) \
+	do {             \
+	} while (0)
 #endif
 
 #if LOG_LEVEL <= LOG_WARN
-#define log_warn(M, ...) fprintf(stderr, "[WARN] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_warn(M, ...)                                              \
+	fprintf(stderr, "[WARN] (%s:%d) " M "\n", __FILE__, __LINE__, \
+		##__VA_ARGS__)
 #else
-#define log_warn(x, ...) do {} while (0)
+#define log_warn(x, ...) \
+	do {             \
+	} while (0)
 #endif
 
 #if LOG_LEVEL <= LOG_ERR
-#define log_err(M, ...) fprintf(stderr, "[ERROR] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define log_err(M, ...)                                                \
+	fprintf(stderr, "[ERROR] (%s:%d) " M "\n", __FILE__, __LINE__, \
+		##__VA_ARGS__)
 #else
-#define log_err(x, ...) do {} while (0)
+#define log_err(x, ...) \
+	do {            \
+	} while (0)
 #endif
 /*@end@*/
-
 
 #endif

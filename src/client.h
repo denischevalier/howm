@@ -18,7 +18,15 @@
  * @brief howm
  */
 
-enum teleport_locations { TOP_LEFT, TOP_CENTER, TOP_RIGHT, CENTER, BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT };
+enum teleport_locations {
+	TOP_LEFT,
+	TOP_CENTER,
+	TOP_RIGHT,
+	CENTER,
+	BOTTOM_LEFT,
+	BOTTOM_CENTER,
+	BOTTOM_RIGHT
+};
 
 int get_non_tff_count(monitor_t *m);
 client_t *get_first_non_tff(monitor_t *m);
@@ -32,7 +40,8 @@ client_t *create_client(xcb_window_t w);
 void remove_client(monitor_t *m, workspace_t *w, client_t *c);
 void client_to_ws(client_t *c, workspace_t *ws, bool follow);
 void draw_clients(void);
-void change_client_geom(client_t *c, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+void change_client_geom(client_t *c, uint16_t x, uint16_t y, uint16_t w,
+			uint16_t h);
 void set_fullscreen(client_t *c, bool fscr);
 void set_urgent(client_t *c, bool urg);
 void move_client(int cnt, bool up);

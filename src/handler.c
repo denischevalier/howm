@@ -41,12 +41,13 @@ static void unhandled_event(xcb_generic_event_t *ev);
  *
  * @param ev The button press event.
  */
-static void button_press_event(xcb_generic_event_t *ev)
-{
-	/* FIXME: be->event doesn't seem to match with any windows managed by howm.*/
+static void button_press_event(xcb_generic_event_t *ev) {
+	/* FIXME: be->event doesn't seem to match with any windows managed by
+	 * howm.*/
 	xcb_button_press_event_t *be = (xcb_button_press_event_t *)ev;
 
-	log_info("Button %d pressed at (%d, %d)", be->detail, be->event_x, be->event_y);
+	log_info("Button %d pressed at (%d, %d)", be->detail, be->event_x,
+		 be->event_y);
 	if (conf.focus_mouse_click && be->detail == XCB_BUTTON_INDEX_1)
 		focus_window(be->event);
 
@@ -66,8 +67,7 @@ static void button_press_event(xcb_generic_event_t *ev)
  *
  * @param ev A mapping request event.
  */
-static void map_event(xcb_generic_event_t *ev)
-{
+static void map_event(xcb_generic_event_t *ev) {
 	xcb_window_t transient = 0;
 	xcb_get_geometry_reply_t *geom;
 	xcb_get_window_attributes_reply_t *wa;
@@ -77,7 +77,8 @@ static void map_event(xcb_generic_event_t *ev)
 	client_t *c;
 	location_t loc;
 
-	wa = xcb_get_window_attributes_reply(dpy, xcb_get_window_attributes(dpy, me->window), NULL);
+	wa = xcb_get_window_attributes_reply(
+	    dpy, xcb_get_window_attributes(dpy, me->window), NULL);
 	if (!wa || wa->override_redirect || loc_win(&loc, me->window)) {
 		free(wa);
 		return;
@@ -88,42 +89,58 @@ static void map_event(xcb_generic_event_t *ev)
 
 	c = create_client(me->window);
 
-	if (xcb_ewmh_get_wm_window_type_reply(ewmh,
-				xcb_ewmh_get_wm_window_type(ewmh, me->window),
-				&type, NULL) == 1) {
+	if (xcb_ewmh_get_wm_window_type_reply(
+		ewmh, xcb_ewmh_get_wm_window_type(ewmh, me->window), &type,
+		NULL) == 1) {
 		for (i = 0; i < type.atoms_len; i++) {
 			xcb_atom_t a = type.atoms[i];
 
-			if (a == ewmh->_NET_WM_WINDOW_TYPE_DOCK
-				|| a == ewmh->_NET_WM_WINDOW_TYPE_TOOLBAR) {
+			if (a == ewmh->_NET_WM_WINDOW_TYPE_DOCK ||
+			    a == ewmh->_NET_WM_WINDOW_TYPE_TOOLBAR) {
 				xcb_map_window(dpy, c->win);
 				remove_client(mon, mon->ws, c);
 				return;
-			} else if (a == ewmh->_NET_WM_WINDOW_TYPE_NOTIFICATION
-				|| a == ewmh->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU
-				|| a == ewmh->_NET_WM_WINDOW_TYPE_SPLASH
-				|| a == ewmh->_NET_WM_WINDOW_TYPE_POPUP_MENU
-				|| a == ewmh->_NET_WM_WINDOW_TYPE_TOOLTIP
-				|| a == ewmh->_NET_WM_WINDOW_TYPE_DIALOG) {
+			} else if (
+			    a == ewmh->_NET_WM_WINDOW_TYPE_NOTIFICATION ||
+			    a == ewmh->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU ||
+			    a == ewmh->_NET_WM_WINDOW_TYPE_SPLASH ||
+			    a == ewmh->_NET_WM_WINDOW_TYPE_POPUP_MENU ||
+			    a == ewmh->_NET_WM_WINDOW_TYPE_TOOLTIP ||
+			    a == ewmh->_NET_WM_WINDOW_TYPE_DIALOG) {
 				c->is_floating = true;
 			}
 		}
 	}
 
 	/* Assume that transient windows MUST float. */
-	xcb_icccm_get_wm_transient_for_reply(dpy, xcb_icccm_get_wm_transient_for_unchecked(dpy, me->window), &transient, NULL);
+	xcb_icccm_get_wm_transient_for_reply(
+	    dpy, xcb_icccm_get_wm_transient_for_unchecked(dpy, me->window),
+	    &transient, NULL);
 	c->is_transient = transient ? true : false;
-	if (c->is_transient)
-		c->is_floating = true;
+	if (c->is_transient) c->is_floating = true;
 
-	geom = xcb_get_geometry_reply(dpy, xcb_get_geometry_unchecked(dpy, me->window), NULL);
+	geom = xcb_get_geometry_reply(
+	    dpy, xcb_get_geometry_unchecked(dpy, me->window), NULL);
 	if (geom) {
-		log_info("Mapped client's initial geom is %ux%u+%d+%d", geom->width, geom->height, geom->x, geom->y);
+		log_info("Mapped client's initial geom is %ux%u+%d+%d",
+			 geom->width, geom->height, geom->x, geom->y);
 		if (c->is_floating) {
-			c->rect.width = geom->width > 1 ? geom->width : conf.float_spawn_width;
-			c->rect.height = geom->height > 1 ? geom->height : conf.float_spawn_height;
-			c->rect.x = conf.center_floating ? (mon->rect.width / 2) - (c->rect.width / 2) : geom->x;
-			c->rect.y = conf.center_floating ? (mon->rect.height - mon->ws->bar_height - c->rect.height) / 2 : geom->y;
+			c->rect.width = geom->width > 1
+					    ? geom->width
+					    : conf.float_spawn_width;
+			c->rect.height = geom->height > 1
+					     ? geom->height
+					     : conf.float_spawn_height;
+			c->rect.x =
+			    conf.center_floating
+				? (mon->rect.width / 2) - (c->rect.width / 2)
+				: geom->x;
+			c->rect.y =
+			    conf.center_floating
+				? (mon->rect.height - mon->ws->bar_height -
+				   c->rect.height) /
+				      2
+				: geom->y;
 		}
 		free(geom);
 	}
@@ -143,13 +160,11 @@ static void map_event(xcb_generic_event_t *ev)
  *
  * @param ev The destroy event.
  */
-static void destroy_event(xcb_generic_event_t *ev)
-{
+static void destroy_event(xcb_generic_event_t *ev) {
 	xcb_destroy_notify_event_t *de = (xcb_destroy_notify_event_t *)ev;
 	location_t loc;
 
-	if (!loc_win(&loc, de->window))
-		return;
+	if (!loc_win(&loc, de->window)) return;
 	log_info("Client <%p> wants to be destroyed", loc.c);
 	remove_client(loc.mon, loc.ws, loc.c);
 	arrange_windows(loc.mon);
@@ -160,8 +175,7 @@ static void destroy_event(xcb_generic_event_t *ev)
  *
  * @param ev The enter event.
  */
-static void enter_event(xcb_generic_event_t *ev)
-{
+static void enter_event(xcb_generic_event_t *ev) {
 	xcb_enter_notify_event_t *ee = (xcb_enter_notify_event_t *)ev;
 	/* TODO: Maybe this needs to go into a motion event, as we might not be
 	 * able to focus another monitor without there being a window there?
@@ -181,8 +195,7 @@ static void enter_event(xcb_generic_event_t *ev)
  *
  * @param ev The event sent from the window.
  */
-static void configure_event(xcb_generic_event_t *ev)
-{
+static void configure_event(xcb_generic_event_t *ev) {
 	xcb_configure_request_event_t *ce = (xcb_configure_request_event_t *)ev;
 	uint32_t vals[7] = {0}, i = 0;
 	location_t loc;
@@ -193,23 +206,24 @@ static void configure_event(xcb_generic_event_t *ev)
 
 	/* TODO: Need to test whether gaps etc need to be taken into account
 	 * here. */
-	if (XCB_CONFIG_WINDOW_X & ce->value_mask)
-		vals[i++] = ce->x;
+	if (XCB_CONFIG_WINDOW_X & ce->value_mask) vals[i++] = ce->x;
 	if (XCB_CONFIG_WINDOW_Y & ce->value_mask)
 		vals[i++] = ce->y + (conf.bar_bottom ? 0 : mon->ws->bar_height);
 	if (XCB_CONFIG_WINDOW_WIDTH & ce->value_mask)
-		vals[i++] = (ce->width < mon->rect.width - conf.border_px) ? ce->width : mon->rect.width - conf.border_px;
+		vals[i++] = (ce->width < mon->rect.width - conf.border_px)
+				? ce->width
+				: mon->rect.width - conf.border_px;
 	if (XCB_CONFIG_WINDOW_HEIGHT & ce->value_mask)
-		vals[i++] = (ce->height < mon->rect.height - conf.border_px) ? ce->height : mon->rect.height - conf.border_px;
+		vals[i++] = (ce->height < mon->rect.height - conf.border_px)
+				? ce->height
+				: mon->rect.height - conf.border_px;
 	if (XCB_CONFIG_WINDOW_BORDER_WIDTH & ce->value_mask)
 		vals[i++] = ce->border_width;
-	if (XCB_CONFIG_WINDOW_SIBLING & ce->value_mask)
-		vals[i++] = ce->sibling;
+	if (XCB_CONFIG_WINDOW_SIBLING & ce->value_mask) vals[i++] = ce->sibling;
 	if (XCB_CONFIG_WINDOW_STACK_MODE & ce->value_mask)
 		vals[i++] = ce->stack_mode;
 	xcb_configure_window(dpy, ce->window, ce->value_mask, vals);
-	if (found)
-		arrange_windows(loc.mon);
+	if (found) arrange_windows(loc.mon);
 }
 
 /**
@@ -217,13 +231,11 @@ static void configure_event(xcb_generic_event_t *ev)
  *
  * @param ev An event letting us know which client should be unmapped.
  */
-static void unmap_event(xcb_generic_event_t *ev)
-{
+static void unmap_event(xcb_generic_event_t *ev) {
 	xcb_unmap_notify_event_t *ue = (xcb_unmap_notify_event_t *)ev;
 	location_t loc;
 
-	if (!loc_win(&loc, ue->window))
-		return;
+	if (!loc_win(&loc, ue->window)) return;
 
 	log_info("Received unmap request for client <%p>", loc.c);
 
@@ -239,24 +251,26 @@ static void unmap_event(xcb_generic_event_t *ev)
  *
  * @param ev The client message as a generic event.
  */
-static void client_message_event(xcb_generic_event_t *ev)
-{
+static void client_message_event(xcb_generic_event_t *ev) {
 	xcb_client_message_event_t *cm = (xcb_client_message_event_t *)ev;
 	location_t loc;
 
-	if (cm->type == ewmh->_NET_CURRENT_DESKTOP
-			&& cm->data.data32[0] < mon->workspace_cnt) {
-		log_info("_NET_CURRENT_DESKTOP: Changing to workspace <%d>", cm->data.data32[0]);
+	if (cm->type == ewmh->_NET_CURRENT_DESKTOP &&
+	    cm->data.data32[0] < mon->workspace_cnt) {
+		log_info("_NET_CURRENT_DESKTOP: Changing to workspace <%d>",
+			 cm->data.data32[0]);
 		change_ws(index_to_workspace(mon, cm->data.data32[0]));
 	}
 
-	if (!loc_win(&loc, cm->window))
-		return;
+	if (!loc_win(&loc, cm->window)) return;
 
 	if (cm->type == ewmh->_NET_WM_STATE) {
-		ewmh_process_wm_state(loc.c, (xcb_atom_t) cm->data.data32[1], cm->data.data32[0]);
+		ewmh_process_wm_state(loc.c, (xcb_atom_t)cm->data.data32[1],
+				      cm->data.data32[0]);
 		if (cm->data.data32[2])
-			ewmh_process_wm_state(loc.c, (xcb_atom_t) cm->data.data32[2], cm->data.data32[0]);
+			ewmh_process_wm_state(loc.c,
+					      (xcb_atom_t)cm->data.data32[2],
+					      cm->data.data32[0]);
 	} else if (cm->type == ewmh->_NET_CLOSE_WINDOW) {
 		log_info("_NET_CLOSE_WINDOW: Removing client <%p>", loc.c);
 		remove_client(loc.mon, loc.ws, loc.c);
@@ -269,40 +283,38 @@ static void client_message_event(xcb_generic_event_t *ev)
 	}
 }
 
-static void unhandled_event(xcb_generic_event_t *ev)
-{
+static void unhandled_event(xcb_generic_event_t *ev) {
 	/* If we have a LOG_LEVEL higher than LOG_DEBUG, then we will
 	 * get compiler warnings about ev not being used. */
 	UNUSED(ev);
 	log_debug("Unhandled event: %d", ev->response_type & ~0x80);
 }
 
-void handle_event(xcb_generic_event_t *ev)
-{
+void handle_event(xcb_generic_event_t *ev) {
 	switch (ev->response_type & ~0x80) {
-	case XCB_BUTTON_PRESS:
-		button_press_event(ev);
-		break;
-	case XCB_MAP_REQUEST:
-		map_event(ev);
-		break;
-	case XCB_DESTROY_NOTIFY:
-		destroy_event(ev);
-		break;
-	case XCB_ENTER_NOTIFY:
-		enter_event(ev);
-		break;
-	case XCB_CONFIGURE_NOTIFY:
-		configure_event(ev);
-		break;
-	case XCB_UNMAP_NOTIFY:
-		unmap_event(ev);
-		break;
-	case XCB_CLIENT_MESSAGE:
-		client_message_event(ev);
-		break;
-	default:
-		unhandled_event(ev);
-		break;
+		case XCB_BUTTON_PRESS:
+			button_press_event(ev);
+			break;
+		case XCB_MAP_REQUEST:
+			map_event(ev);
+			break;
+		case XCB_DESTROY_NOTIFY:
+			destroy_event(ev);
+			break;
+		case XCB_ENTER_NOTIFY:
+			enter_event(ev);
+			break;
+		case XCB_CONFIGURE_NOTIFY:
+			configure_event(ev);
+			break;
+		case XCB_UNMAP_NOTIFY:
+			unmap_event(ev);
+			break;
+		case XCB_CLIENT_MESSAGE:
+			client_message_event(ev);
+			break;
+		default:
+			unhandled_event(ev);
+			break;
 	}
 }

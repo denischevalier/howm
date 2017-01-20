@@ -32,8 +32,7 @@ static void change_gaps(const unsigned int type, unsigned int cnt, int size);
  *
  * @ingroup operators
  */
-void op_kill(const unsigned int type, unsigned int cnt)
-{
+void op_kill(const unsigned int type, unsigned int cnt) {
 	if (type == WORKSPACE) {
 		log_info("Killing %d workspaces", cnt);
 		while (cnt > 0) {
@@ -58,10 +57,8 @@ void op_kill(const unsigned int type, unsigned int cnt)
  *
  * @ingroup operators
  */
-void op_move_down(const unsigned int type, unsigned int cnt)
-{
-	if (type == WORKSPACE)
-		return;
+void op_move_down(const unsigned int type, unsigned int cnt) {
+	if (type == WORKSPACE) return;
 	move_client(cnt, false);
 }
 
@@ -74,10 +71,8 @@ void op_move_down(const unsigned int type, unsigned int cnt)
  *
  * @ingroup operators
  */
-void op_move_up(const unsigned int type, unsigned int cnt)
-{
-	if (type == WORKSPACE)
-		return;
+void op_move_up(const unsigned int type, unsigned int cnt) {
+	if (type == WORKSPACE) return;
 	move_client(cnt, true);
 }
 
@@ -89,8 +84,7 @@ void op_move_up(const unsigned int type, unsigned int cnt)
  *
  * @ingroup operators
  */
-void op_focus_up(const unsigned int type, unsigned int cnt)
-{
+void op_focus_up(const unsigned int type, unsigned int cnt) {
 	while (cnt > 0) {
 		if (type == CLIENT)
 			focus_next_client();
@@ -110,8 +104,7 @@ void op_focus_up(const unsigned int type, unsigned int cnt)
  *
  * @ingroup operators
  */
-void op_focus_down(const unsigned int type, unsigned int cnt)
-{
+void op_focus_down(const unsigned int type, unsigned int cnt) {
 	while (cnt > 0) {
 		if (type == CLIENT)
 			focus_prev_client();
@@ -136,8 +129,7 @@ void op_focus_down(const unsigned int type, unsigned int cnt)
  *
  * @ingroup operators
  */
-void op_grow_gaps(const unsigned int type, unsigned int cnt)
-{
+void op_grow_gaps(const unsigned int type, unsigned int cnt) {
 	change_gaps(type, cnt, conf.op_gap_size);
 }
 
@@ -149,23 +141,24 @@ void op_grow_gaps(const unsigned int type, unsigned int cnt)
  * @param size The amount of pixels to change the gap size by. This is
  * configured through conf.op_gap_size.
  */
-static void change_gaps(const unsigned int type, unsigned int cnt, int size)
-{
+static void change_gaps(const unsigned int type, unsigned int cnt, int size) {
 	client_t *c = NULL;
 	workspace_t *ws = NULL;
 
 	if (type == WORKSPACE) {
-		for (ws = mon->ws; ws != NULL && cnt > 0; ws = ws->next, cnt--) {
+		for (ws = mon->ws; ws != NULL && cnt > 0;
+		     ws = ws->next, cnt--) {
 			ws->gap += size;
 			log_info("Changing gaps of workspace <%d> by %dpx",
-					workspace_to_index(ws), size);
+				 workspace_to_index(ws), size);
 			for (c = ws->head; c; c = c->next)
 				change_client_gaps(c, size);
 		}
 	} else if (type == CLIENT) {
 		c = mon->ws->c;
 		while (cnt > 0) {
-			log_info("Changing gaps of client <%p> by %dpx", c, size);
+			log_info("Changing gaps of client <%p> by %dpx", c,
+				 size);
 			change_client_gaps(c, size);
 			c = next_client(c);
 			cnt--;
@@ -186,22 +179,21 @@ static void change_gaps(const unsigned int type, unsigned int cnt, int size)
  *
  * @ingroup operators
  */
-void op_cut(const unsigned int type, unsigned int cnt)
-{
+void op_cut(const unsigned int type, unsigned int cnt) {
 	client_t *tail = mon->ws->c;
 	client_t *head = mon->ws->c;
 	client_t *head_prev = prev_client(mon->ws->c, mon->ws);
 	bool wrap = false;
 
-	if (!head)
-		return;
+	if (!head) return;
 
 	if (del_reg.size >= conf.delete_register_size) {
 		log_warn("No more stack space.");
 		return;
 	}
 
-	if ((type == CLIENT && cnt >= mon->ws->client_cnt) || type == WORKSPACE) {
+	if ((type == CLIENT && cnt >= mon->ws->client_cnt) ||
+	    type == WORKSPACE) {
 		/* TODO: Actually implement this... */
 		return;
 
@@ -216,8 +208,7 @@ void op_cut(const unsigned int type, unsigned int cnt)
 				 * clients. */
 				tail->next = next_client(tail);
 			}
-			if (tail == mon->ws->prev_foc)
-				mon->ws->prev_foc = NULL;
+			if (tail == mon->ws->prev_foc) mon->ws->prev_foc = NULL;
 			tail = next_client(tail);
 			xcb_unmap_window(dpy, tail->win);
 			cnt--;
@@ -225,7 +216,9 @@ void op_cut(const unsigned int type, unsigned int cnt)
 		}
 
 		if (head == mon->ws->head) {
-			mon->ws->head = head == next_client(tail) ? NULL : next_client(tail);
+			mon->ws->head = head == next_client(tail)
+					    ? NULL
+					    : next_client(tail);
 		} else if (wrap) {
 			mon->ws->head = tail->next;
 			head_prev->next = NULL;
@@ -253,8 +246,7 @@ void op_cut(const unsigned int type, unsigned int cnt)
  *
  * @ingroup operators
  */
-void op_shrink_gaps(const unsigned int type, unsigned int cnt)
-{
+void op_shrink_gaps(const unsigned int type, unsigned int cnt) {
 	change_gaps(type, cnt, -conf.op_gap_size);
 }
 
@@ -265,10 +257,8 @@ void op_shrink_gaps(const unsigned int type, unsigned int cnt)
  *
  * @ingroup commands
  */
-void count(const unsigned int cnt)
-{
-	if (cur_state != COUNT_STATE)
-		return;
+void count(const unsigned int cnt) {
+	if (cur_state != COUNT_STATE) return;
 	cur_cnt = cnt;
 	cur_state = MOTION_STATE;
 }
@@ -283,12 +273,10 @@ void count(const unsigned int cnt)
  *
  * @ingroup commands
  */
-void motion(char *target)
-{
+void motion(char *target) {
 	int type;
 
-	if (cur_state == OPERATOR_STATE)
-		return;
+	if (cur_state == OPERATOR_STATE) return;
 
 	if (strncmp(target, "w", 1) == 0)
 		type = WORKSPACE;
